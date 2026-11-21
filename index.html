@@ -1275,6 +1275,7 @@
     let notifTimeout = null;
     let latestReceiptBlob = null;
     let latestReceiptFileName = 'Kuitansi.png';
+    let latestReceiptDataUrl = '';
 
     function classifyLoanItem_(item) {
       const pinjaman = Number(item.pinjaman) || 0;
@@ -2686,25 +2687,42 @@
     }
 
     function finalizeReceiptDownload(canvas, ctx, boxX, boxY, boxW, adminName, nama) {
-      ctx.strokeStyle = '#a3c4ad'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(boxX + 18, boxY + 78); ctx.lineTo(boxX + boxW - 18, boxY + 78); ctx.stroke();
-      ctx.fillStyle = '#112218'; ctx.font = '700 14px "Plus Jakarta Sans", sans-serif'; ctx.textAlign = 'center'; ctx.fillText(adminName, boxX + boxW / 2, boxY + 97);
+      ctx.strokeStyle = '#a3c4ad';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(boxX + 18, boxY + 78);
+      ctx.lineTo(boxX + boxW - 18, boxY + 78);
+      ctx.stroke();
 
-      canvas.toBlob(blob => {
-        latestReceiptBlob = blob;
-        const url = URL.createObjectURL(blob);
-        const safeName = nama.replace(/[^a-zA-Z0-9]/g, '_');
-        latestReceiptFileName = `Kuitansi_${safeName}.png`;
-        const canShareFiles = Boolean(navigator.canShare && navigator.share);
+      ctx.fillStyle = '#112218';
+      ctx.font = '700 14px "Plus Jakarta Sans", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(adminName, boxX + boxW / 2, boxY + 97);
 
-        $('receiptContent').innerHTML = `
-          <div style="text-align:center; padding:24px 12px; display:flex; flex-direction:column; gap:10px; align-items:center;">
-            <span class="badge badge-hadir" style="padding:6px 14px; font-size:12.5px;">Kuitansi PNG Siap Diunduh</span>
-            <p style="font-size:13px; color:var(--text-secondary);">Simpan bukti transaksi ke penyimpanan perangkat atau bagikan langsung ke WhatsApp.</p>
-            <a href="${url}" download="${latestReceiptFileName}" class="btn btn-primary" style="width:100%; max-width:260px; text-decoration:none;">Unduh Kuitansi PNG</a>
-            ${canShareFiles ? `<button type="button" class="btn btn-sage" style="width:100%; max-width:260px;" onclick="shareReceiptFile()">Bagikan ke WhatsApp / Galeri</button>` : ''}
-          </div>
-        `;
-      }, 'image/png');
+      latestReceiptFileName = `Kuitansi_${String(nama || 'Peminjam').replace(/[^a-zA-Z0-9_-]/g, '_')}.png`;
+      latestReceiptDataUrl = canvas.toDataURL('image/png');
+
+      canvas.toBlob(blob => { latestReceiptBlob = blob; }, 'image/png');
+      const canShareFiles = Boolean(navigator.canShare && navigator.share);
+
+      $('receiptContent').innerHTML = `
+        <div style="text-align:center; padding:24px 12px; display:flex; flex-direction:column; gap:10px; align-items:center;">
+          <span class="badge badge-hadir" style="padding:6px 14px; font-size:12.5px;">Kuitansi PNG Siap Diunduh</span>
+          <p style="font-size:13px; color:var(--text-secondary);">Simpan bukti transaksi ke penyimpanan perangkat Anda.</p>
+          <a href="${latestReceiptDataUrl}" download="${latestReceiptFileName}" onclick="triggerMedianDownload(event)" class="btn btn-primary" style="width:100%; max-width:260px; text-decoration:none;">Unduh Kuitansi PNG</a>
+          ${canShareFiles ? `<button type="button" class="btn btn-sage" style="width:100%; max-width:260px;" onclick="shareReceiptFile()">Bagikan ke WhatsApp / Galeri</button>` : ''}
+        </div>
+      `;
+    }
+
+    function triggerMedianDownload(e) {
+      if (window.median && window.median.share && window.median.share.downloadFile) {
+        if (e) e.preventDefault();
+        window.median.share.downloadFile({ url: latestReceiptDataUrl, filename: latestReceiptFileName });
+      } else if (window.gonative && window.gonative.share && window.gonative.share.downloadFile) {
+        if (e) e.preventDefault();
+        window.gonative.share.downloadFile({ url: latestReceiptDataUrl, filename: latestReceiptFileName });
+      }
     }
 
     if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
