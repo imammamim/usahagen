@@ -1,0 +1,25 @@
+{
+  "name": "USAHA GEN Z — Enterprise Finance",
+  "short_name": "Usaha Gen Z",
+  "description": "Sistem Manajemen Keuangan, Pinjaman & Jasa Layanan",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#10231b",
+  "theme_color": "#10231b",
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
